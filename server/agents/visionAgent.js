@@ -97,8 +97,19 @@ export async function recognizeLandmark({ mediaDataUrl, mediaType = "image", use
     });
 
     const parsed = parseJsonFromModel(completion.choices?.[0]?.message?.content, UNKNOWN_RESULT);
+    const normalized = normalizeRecognition(correctKnownConfusions(parsed), scenes);
+    if (normalized.sceneId === "unknown") {
+      const rescued = await rescueSuzhouLandmark(client, mediaPart, knownScenes);
+      if (rescued.sceneId !== "unknown") {
+        return {
+          ...normalizeRecognition(correctKnownConfusions(rescued), scenes),
+          source: "mimo-vision-rescue",
+          latencyMs: Date.now() - startedAt
+        };
+      }
+    }
     return {
-      ...normalizeRecognition(correctKnownConfusions(parsed), scenes),
+      ...normalized,
       source: "mimo-vision",
       latencyMs: Date.now() - startedAt
     };
@@ -109,6 +120,41 @@ export async function recognizeLandmark({ mediaDataUrl, mediaType = "image", use
       source: "mimo-error-fallback",
       error: error?.message || String(error)
     };
+  }
+}
+
+async function rescueSuzhouLandmark(client, mediaPart, knownScenes) {
+  const rescuePrompt = [
+    "请重新观察这张图。你的任务不是严格分类，而是尽量判断它是否为苏州文旅相关地标或场景。",
+    "如果看到以下任一信息，请不要返回 unknown：",
+    "1. 牌匾/路牌/字幕/店招出现苏州、姑苏、平江路、寒山寺、虎丘、山塘、拙政园、苏州博物馆、东方之门、金鸡湖、同里、周庄等字样。",
+    "2. 画面是典型苏州/江南文旅场景：白墙黛瓦、水巷、石桥、园林、寺塔、古镇河道、苏州现代地标。",
+    "3. 即使无法确认具体名称，只要较像苏州文旅场景，也返回 sceneId=open_suzhou，landmarkName=苏州地标。",
+    "只有在画面明显不是苏州、没有地标、没有建筑/景区/城市线索时，才返回 sceneId=unknown。",
+    "如果画面是东方之门双塔，请返回 dongfangzhimen，不要返回金鸡湖。",
+    "如果画面是寒山寺寺塔/寺院建筑，请返回 hanshansi。",
+    "如果画面有平江路牌匾/水巷石桥白墙黛瓦，请返回 pingjianglu。",
+    "输出 JSON，不要 Markdown。字段：sceneId, landmarkName, confidence, isSuzhou, evidence, candidates, recommendedExperience, answerMode。",
+    `knownScenes=${JSON.stringify(knownScenes)}`
+  ].join("\n");
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: MIMO_VISION_MODEL,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: rescuePrompt },
+            mediaPart
+          ]
+        }
+      ],
+      temperature: 0
+    });
+    return parseJsonFromModel(completion.choices?.[0]?.message?.content, UNKNOWN_RESULT);
+  } catch {
+    return UNKNOWN_RESULT;
   }
 }
 

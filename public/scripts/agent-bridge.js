@@ -325,7 +325,8 @@
     Shell._showAgentUnknown = function showAgentUnknown() {
       const root = this.rootEl || document.getElementById("shell-root");
       const label = root?.querySelector(".scan-label");
-      if (label) label.textContent = "未识别到苏州地标，请靠近牌匾、路牌、寺塔、园林或水巷细节再试。";
+      const detail = this._lastRecognitionDebug || "";
+      if (label) label.textContent = detail || "未识别到苏州地标，请靠近牌匾、路牌、寺塔、园林或水巷细节再试。";
       this.toast?.("未识别到苏州地标", 1300);
       const recognize = root?.querySelector(".camera-recognize");
       if (recognize) recognize.hidden = false;
@@ -367,6 +368,11 @@
     hideRecognitionPreview(shell.rootEl || document.getElementById("shell-root"));
     const route = result.route || {};
     const recognition = result.recognition || {};
+    shell._lastRecognitionDebug = recognition?.evidence?.length
+      ? `未识别到地标：${recognition.evidence.join("；")}`
+      : recognition?.source
+        ? `未识别到地标：${recognition.source}`
+        : "";
 
     if (route.nextAction === "choose_landmark") {
       shell._showAgentCandidates?.(route.candidates || recognition.candidates || []);
