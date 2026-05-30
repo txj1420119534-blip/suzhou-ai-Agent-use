@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>一镜入姑苏 Agent 调试台</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #27211c;
+        --muted: #756a5d;
+        --paper: #fbf5e8;
+        --line: rgba(120, 91, 55, 0.22);
+        --red: #b62e2b;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 20% 0%, rgba(190, 63, 54, 0.12), transparent 32rem),
+          linear-gradient(135deg, #fff9ef, #ede4d4);
+      }
+
+      main {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 32px 0 48px;
+      }
+
+      header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 22px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 34px;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      a {
+        color: var(--red);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      section {
+        min-height: 280px;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 252, 244, 0.82);
+        box-shadow: 0 18px 60px rgba(66, 48, 31, 0.12);
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 20px;
+      }
+
+      label {
+        display: block;
+        margin: 12px 0 8px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px;
+        font: inherit;
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.75);
+      }
+
+      textarea {
+        min-height: 104px;
+        resize: vertical;
+      }
+
+      button {
+        margin-top: 12px;
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 18px;
+        font: inherit;
+        font-weight: 700;
+        color: white;
+        background: var(--red);
+        cursor: pointer;
+      }
+
+      pre {
+        min-height: 130px;
+        max-height: 320px;
+        overflow: auto;
+        padding: 14px;
+        border-radius: 12px;
+        color: #31291e;
+        background: rgba(235, 226, 207, 0.78);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .wide { grid-column: 1 / -1; }
+
+      @media (max-width: 760px) {
+        header,
+        .grid { grid-template-columns: 1fr; display: grid; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>一镜入姑苏 Agent 调试台</h1>
+          <p>用于测试相机识别、视频识别、苏轼对话和主动推荐接口。正式体验仍从 <a href="/">Demo 首页</a> 进入。</p>
+        </div>
+      </header>
+
+      <div class="grid">
+        <section>
+          <h2>相机地标识别</h2>
+          <label for="cameraFile">上传一张相机截图</label>
+          <input id="cameraFile" type="file" accept="image/*" />
+          <label for="cameraHint">补充文本（无 API key 时可用关键词演示）</label>
+          <input id="cameraHint" placeholder="例如：画面中有平江路牌匾和石桥水巷" />
+          <button data-action="camera">识别相机画面</button>
+          <pre id="cameraResult">等待识别...</pre>
+        </section>
+
+        <section>
+          <h2>视频地标识别</h2>
+          <label for="videoFile">上传视频或视频帧</label>
+          <input id="videoFile" type="file" accept="video/*,image/*" />
+          <label for="videoHint">补充文本</label>
+          <input id="videoHint" placeholder="例如：寒山寺、枫桥、钟声" />
+          <button data-action="video">识别视频内容</button>
+          <pre id="videoResult">等待识别...</pre>
+        </section>
+
+        <section>
+          <h2>苏轼对话</h2>
+          <label for="sushiMessage">用户问题</label>
+          <textarea id="sushiMessage">苏先生，我最近被老板针对，想辞职，又怕找不到下家。</textarea>
+          <button data-action="sushi">问苏轼</button>
+          <pre id="sushiResult">等待回答...</pre>
+        </section>
+
+        <section>
+          <h2>周边主动推荐</h2>
+          <label for="sceneId">地标</label>
+          <select id="sceneId">
+            <option value="pingjianglu">平江路</option>
+            <option value="hanshansi">寒山寺</option>
+            <option value="huqiu">虎丘</option>
+            <option value="xumen">胥门</option>
+          </select>
+          <label for="profile">用户偏好 JSON</label>
+          <textarea id="profile">{"likes":["奶茶","文创","夜游"],"budget":"low"}</textarea>
+          <button data-action="recommend">生成推荐</button>
+          <pre id="recommendResult">等待推荐...</pre>
+        </section>
+
+        <section class="wide">
+          <h2>接口状态</h2>
+          <button data-action="health">检查服务</button>
+          <pre id="healthResult">点击检查服务。</pre>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      async function fileToDataUrl(input) {
+        const file = input.files && input.files[0];
+        if (!file) return "";
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function postJson(url, body) {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        return response.json();
+      }
+
+      function write(id, data) {
+        document.getElementById(id).textContent = JSON.stringify(data, null, 2);
+      }
+
+      document.addEventListener("click", async (event) => {
+        const action = event.target.dataset.action;
+        if (!action) return;
+
+        if (action === "health") {
+          write("healthResult", await fetch("/api/health").then((res) => res.json()));
+        }
+
+        if (action === "camera") {
+          const imageDataUrl = await fileToDataUrl(document.getElementById("cameraFile"));
+          const userText = document.getElementById("cameraHint").value;
+          write("cameraResult", await postJson("/api/recognize/camera", { imageDataUrl, userText }));
+        }
+
+        if (action === "video") {
+          const input = document.getElementById("videoFile");
+          const dataUrl = await fileToDataUrl(input);
+          const file = input.files && input.files[0];
+          const isVideo = file && file.type.startsWith("video/");
+          const userText = document.getElementById("videoHint").value;
+          write("videoResult", await postJson("/api/recognize/video", {
+            videoDataUrl: isVideo ? dataUrl : "",
+            frameDataUrl: isVideo ? "" : dataUrl,
+            userText
+          }));
+        }
+
+        if (action === "sushi") {
+          const message = document.getElementById("sushiMessage").value;
+          write("sushiResult", await postJson("/api/chat/sushi", { message }));
+        }
+
+        if (action === "recommend") {
+          const sceneId = document.getElementById("sceneId").value;
+          let userProfile = {};
+          try {
+            userProfile = JSON.parse(document.getElementById("profile").value || "{}");
+          } catch {
+            userProfile = { raw: document.getElementById("profile").value };
+          }
+          write("recommendResult", await postJson("/api/recommendations", { sceneId, userProfile }));
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,20 @@
+[
+  {
+    "sceneId": "pingjianglu",
+    "landmarkName": "平江路",
+    "file": "pingjianglu-r.jpg",
+    "reason": "参考图命中：遇见平江路牌匾、白墙黛瓦、红灯笼街巷"
+  },
+  {
+    "sceneId": "dongfangzhimen",
+    "landmarkName": "东方之门",
+    "file": "dongfangzhimen-0204.jpg",
+    "reason": "参考图命中：东方之门双塔与苏州中心天际线"
+  },
+  {
+    "sceneId": "hanshansi",
+    "landmarkName": "寒山寺",
+    "file": "hanshansi-pagoda.jpg",
+    "reason": "参考图命中：寒山寺普明宝塔、寺院屋顶与银杏林"
+  }
+]

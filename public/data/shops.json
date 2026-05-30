@@ -1,0 +1,61 @@
+{
+  "shops": [
+    {
+      "id": "lugaojian",
+      "name": "陆稿荐",
+      "foundedYear": 1663,
+      "ageLabel": "360 年老字号",
+      "category": "food",
+      "signature": "酱汁肉",
+      "price": "¥38 / 块",
+      "distanceMeters": 100,
+      "distanceLabel": "前方 100 米",
+      "address": "平江路 32 号",
+      "icon": "./assets/images/shops/lugaojian_icon.png",
+      "iconEmoji": "🥩",
+      "color": "#B8302E",
+      "story": "康熙二年起家, 一块酱汁肉慢火六小时, 苏州人家家年夜饭都要的那一口。三百六十年, 灶头从未冷过。",
+      "ownerQuote": "我家这口锅, 从康熙年间烧到今朝, 客官尝一块, 就是尝了三百六十年的火候。",
+      "coupon": "凭此卡可换一片试吃酱方, 仅限店内",
+      "tags": ["老字号", "苏帮菜", "必尝"]
+    },
+    {
+      "id": "caizhizhai",
+      "name": "采芝斋",
+      "foundedYear": 1870,
+      "ageLabel": "150 余年苏式糖店",
+      "category": "sweet",
+      "signature": "粽子糖",
+      "price": "¥18 / 盒",
+      "distanceMeters": 200,
+      "distanceLabel": "前方 200 米",
+      "address": "观前街 91 号",
+      "icon": "./assets/images/shops/caizhizhai_icon.png",
+      "iconEmoji": "🍬",
+      "color": "#B8860B",
+      "story": "光绪年间起家, 粽子糖、松子糖、薄荷糖, 是苏州人嫁女儿压箱底的甜。慈禧太后也曾点名要这一口。",
+      "ownerQuote": "粽子糖含在嘴里, 走完一条平江路它还在, 这才叫真功夫。",
+      "coupon": "扫码送粽子糖一颗, 含在嘴里走平江路",
+      "tags": ["老字号", "苏式糖", "伴手礼"]
+    },
+    {
+      "id": "fuxihuiguan",
+      "name": "伏羲会馆",
+      "foundedYear": 1958,
+      "ageLabel": "苏州老书场",
+      "category": "tea-house",
+      "signature": "评弹开篇",
+      "price": "¥20 / 一段开篇",
+      "distanceMeters": 50,
+      "distanceLabel": "近在 50 米",
+      "address": "平江路 254 号",
+      "icon": "./assets/images/shops/fuxihuiguan_icon.png",
+      "iconEmoji": "🍵",
+      "color": "#4A6670",
+      "story": "评弹老书场, 每天下午两点半开书, 一壶碧螺春配半场《珍珠塔》, 老苏州的标配。听一段开篇, 才算真正到过平江路。",
+      "ownerQuote": "客官坐定, 一壶茶, 一段开篇, 二十块钱听半场, 走的时候腿会软, 心会软。",
+      "coupon": "凭此卡免一壶碧螺春, 听半场不限时",
+      "tags": ["评弹", "茶馆", "文化体验"]
+    }
+  ]
+}

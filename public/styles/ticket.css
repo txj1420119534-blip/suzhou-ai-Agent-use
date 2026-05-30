@@ -1,0 +1,537 @@
+/* ============================================================
+ * ticket.css — AI 船票样式
+ * Builder 2 · 严格使用 tokens.css 的 CSS 变量
+ * ============================================================ */
+
+/* ---------- 船票根容器 (展开态: 全屏 modal) ---------- */
+.ticket-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.ticket-modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(45, 62, 80, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 360ms var(--ease-ink);
+}
+
+.ticket-modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ---------- 船票主体 (横版 1080×600 → 等比缩放) ---------- */
+.ticket {
+  /* 设计稿 1080×600, 移动端缩到 92vw */
+  width: 92vw;
+  max-width: calc(var(--shell-max-w) * 0.92);
+  aspect-ratio: 1080 / 600;
+
+  display: flex;
+  background: linear-gradient(
+    135deg,
+    var(--c-paper-yellow) 0%,
+    var(--c-paper) 60%,
+    #F0E4C7 100%
+  );
+  font-family: var(--font-serif);
+  color: var(--c-inkblack);
+
+  border-radius: 6px;
+  box-shadow:
+    0 18px 60px rgba(45, 62, 80, 0.35),
+    inset 0 0 0 1px rgba(184, 134, 11, 0.25),
+    inset 0 0 32px rgba(245, 230, 200, 0.6);
+
+  /* 进入动画起点 (从底部滑入) */
+  transform: translateY(140%) scale(0.94);
+  opacity: 0;
+  position: relative;
+  overflow: visible;
+}
+
+.ticket.is-slide-in {
+  animation: ticketSlideIn 1000ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes ticketSlideIn {
+  0%   { transform: translateY(140%) scale(0.94); opacity: 0; }
+  60%  { transform: translateY(-4%)  scale(1.02); opacity: 1; }
+  100% { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+
+/* ---------- 正联 + 票根 (flex 70/30) ---------- */
+.ticket__main {
+  flex: 0 0 70%;
+  padding: 4% 4% 4% 5%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.ticket__stub {
+  flex: 0 0 30%;
+  padding: 4% 3%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(184, 134, 11, 0.06) 0%,
+      rgba(184, 48, 46, 0.08) 100%
+    );
+}
+
+/* ---------- 撕痕 (CSS clip-path 锯齿) ---------- */
+.ticket__perforation {
+  position: absolute;
+  top: 6%;
+  bottom: 6%;
+  left: 70%;
+  width: 2px;
+  background: transparent;
+  /* 锯齿用 background-image 重复打孔 */
+  background-image: radial-gradient(
+    circle,
+    var(--c-misty) 0,
+    var(--c-misty) 2px,
+    transparent 2.5px
+  );
+  background-size: 2px 12px;
+  background-repeat: repeat-y;
+  opacity: 0.5;
+}
+
+.ticket__perforation::before,
+.ticket__perforation::after {
+  content: "";
+  position: absolute;
+  left: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--c-inkblack);
+}
+
+.ticket__perforation::before { top: -12px; }
+.ticket__perforation::after  { bottom: -12px; }
+
+/* ---------- 正联内容 ---------- */
+.ticket__brand {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--c-misty);
+  border-bottom: 1px dashed rgba(74, 102, 112, 0.3);
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ticket__brand-name {
+  font-weight: 700;
+  color: var(--c-cinnabar);
+  letter-spacing: 2px;
+}
+
+.ticket__brand-tag {
+  font-size: 10px;
+  color: var(--c-misty);
+  opacity: 0.7;
+}
+
+.ticket__title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 2%;
+}
+
+.ticket__boat-no {
+  font-size: clamp(20px, 5.2vw, 30px);
+  font-weight: 900;
+  color: var(--c-inkblack);
+  letter-spacing: 3px;
+  line-height: 1.1;
+}
+
+.ticket__boat-no small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--c-misty);
+  letter-spacing: 4px;
+  margin-bottom: 4px;
+}
+
+/* 暖金笔刷分隔线 (纯 CSS) */
+.ticket__divider {
+  height: 6px;
+  margin: 8px 0;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--c-gold) 10%,
+      #D4A52F 40%,
+      var(--c-gold) 60%,
+      transparent 100%
+    );
+  border-radius: 3px;
+  position: relative;
+  opacity: 0.7;
+  /* 笔刷感: 上下不规则 */
+  clip-path: polygon(
+    0% 50%, 5% 20%, 10% 60%, 18% 30%, 28% 70%,
+    40% 25%, 55% 75%, 70% 30%, 82% 65%, 92% 35%, 100% 50%,
+    100% 60%, 92% 80%, 82% 40%, 70% 75%, 55% 30%,
+    40% 80%, 28% 35%, 18% 75%, 10% 45%, 5% 80%, 0% 60%
+  );
+}
+
+.ticket__passenger-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: 4%;
+}
+
+.ticket__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #F5E6C8, #B8860B);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--c-paper);
+  border: 2px solid var(--c-cinnabar);
+  box-shadow: 0 2px 6px rgba(184, 48, 46, 0.25);
+}
+
+.ticket__passenger {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-cinnabar);
+  letter-spacing: 2px;
+}
+
+.ticket__passenger small {
+  display: block;
+  font-size: 10px;
+  color: var(--c-misty);
+  font-weight: 400;
+  letter-spacing: 3px;
+  margin-bottom: 2px;
+}
+
+/* 寄语 */
+.ticket__wish {
+  margin-top: 4%;
+  padding-top: 6px;
+  border-top: 1px dotted rgba(45, 62, 80, 0.2);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--c-misty);
+  font-style: italic;
+  letter-spacing: 1px;
+}
+
+/* ---------- 朱砂方印 ---------- */
+.ticket__seal {
+  position: absolute;
+  right: 32%;
+  bottom: 8%;
+  width: 56px;
+  height: 56px;
+  background: var(--c-cinnabar);
+  color: var(--c-paper);
+  font-family: var(--font-serif);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transform: rotate(-8deg);
+  box-shadow:
+    inset 0 0 0 2px var(--c-paper-yellow),
+    inset 0 0 0 3px var(--c-cinnabar),
+    0 2px 6px rgba(184, 48, 46, 0.3);
+  /* 印章纹路: 不规则边 */
+  clip-path: polygon(
+    2% 6%, 8% 0%, 22% 3%, 38% 0%, 55% 4%, 72% 1%, 88% 5%, 98% 2%,
+    100% 18%, 97% 35%, 100% 52%, 98% 68%, 100% 82%, 96% 95%,
+    85% 100%, 68% 97%, 52% 100%, 36% 98%, 20% 100%, 6% 96%,
+    0% 85%, 3% 68%, 0% 50%, 2% 32%, 0% 18%
+  );
+}
+
+.ticket__seal::before {
+  content: "姑苏\A入境章";
+  white-space: pre;
+}
+
+/* ---------- 票根 ---------- */
+.ticket__stub-label {
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: var(--c-misty);
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  margin-bottom: 8px;
+}
+
+.ticket__stub-stamps-title {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--c-misty);
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+/* ---------- 经停章: 4 个圆点 ---------- */
+.ticket__stops {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  width: 100%;
+  padding: 4px 8px;
+}
+
+.ticket__stop {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(184, 48, 46, 0.5);
+  background: transparent;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: rgba(184, 48, 46, 0.6);
+  letter-spacing: 0;
+  transition: transform 280ms var(--ease-pop);
+  justify-self: center;
+}
+
+.ticket__stop-label {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: var(--c-misty);
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+/* 已完成态: 实心 + 钩 */
+.ticket__stop.is-done {
+  background: var(--c-cinnabar);
+  border-color: var(--c-cinnabar);
+  color: var(--c-paper);
+  box-shadow: 0 0 0 2px rgba(184, 48, 46, 0.18);
+  animation: stopStampIn 800ms var(--ease-pop);
+}
+
+.ticket__stop.is-done::after {
+  content: "✓";
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--c-paper);
+  font-family: var(--font-serif);
+}
+
+@keyframes stopStampIn {
+  0%   { transform: scale(2.4) rotate(-20deg); opacity: 0; }
+  60%  { transform: scale(0.86) rotate(8deg);   opacity: 1; }
+  100% { transform: scale(1)    rotate(0);      opacity: 1; }
+}
+
+/* 票根底部小信息 */
+.ticket__stub-meta {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--c-misty);
+  text-align: center;
+  border-top: 1px dotted rgba(74, 102, 112, 0.3);
+  padding-top: 6px;
+  width: 100%;
+}
+
+.ticket__stub-meta strong {
+  display: block;
+  color: var(--c-cinnabar);
+  font-size: 10px;
+  margin-top: 2px;
+  letter-spacing: 2px;
+}
+
+/* ============================================================
+ * 收起态: 右上角 60×60 圆形按钮 + 数字角标
+ * ============================================================ */
+.ticket-mini {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, #D43936 0%, var(--c-cinnabar) 60%, #8E1F1D 100%);
+  color: var(--c-paper);
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow:
+    0 6px 18px rgba(184, 48, 46, 0.45),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.2),
+    inset 0 2px 4px rgba(255, 255, 255, 0.15);
+  z-index: 99;
+  border: 2px solid var(--c-paper-yellow);
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 200ms var(--ease-pop);
+}
+
+.ticket-mini::before {
+  content: "船\A票";
+  white-space: pre;
+  text-align: center;
+}
+
+.ticket-mini:hover,
+.ticket-mini:active {
+  transform: scale(1.06);
+}
+
+.ticket-mini__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--c-gold);
+  color: var(--c-inkblack);
+  font-size: 11px;
+  font-weight: 900;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--c-paper);
+  font-family: var(--font-serif);
+  letter-spacing: 0;
+}
+
+/* 关闭按钮 (modal 内) */
+.ticket-close {
+  position: absolute;
+  top: -44px;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(245, 241, 232, 0.9);
+  color: var(--c-inkblack);
+  border: none;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-serif);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.ticket-close::before { content: "×"; line-height: 1; }
+
+/* ============================================================
+ * 金边升级态 (完成全部经停后)
+ * ============================================================ */
+.ticket.is-golden {
+  outline: 8px solid var(--c-gold);
+  outline-offset: -2px;
+  box-shadow:
+    0 0 0 1px var(--c-gold),
+    0 0 32px rgba(184, 134, 11, 0.55),
+    0 0 64px rgba(184, 134, 11, 0.35),
+    0 18px 60px rgba(45, 62, 80, 0.45),
+    inset 0 0 32px rgba(245, 230, 200, 0.8);
+  animation: goldenGlow 2400ms ease-in-out infinite;
+}
+
+@keyframes goldenGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px var(--c-gold),
+      0 0 28px rgba(184, 134, 11, 0.5),
+      0 0 56px rgba(184, 134, 11, 0.3),
+      0 18px 60px rgba(45, 62, 80, 0.45),
+      inset 0 0 32px rgba(245, 230, 200, 0.8);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px var(--c-gold),
+      0 0 40px rgba(184, 134, 11, 0.75),
+      0 0 80px rgba(184, 134, 11, 0.5),
+      0 18px 60px rgba(45, 62, 80, 0.5),
+      inset 0 0 40px rgba(245, 230, 200, 1);
+  }
+}
+
+.ticket.is-golden .ticket__divider {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(184, 134, 11, 0.6));
+}
+
+.ticket.is-golden .ticket__brand-tag::after {
+  content: " · 金边版";
+  color: var(--c-gold);
+  font-weight: 700;
+}
+
+.ticket-mini.is-golden {
+  border-color: var(--c-gold);
+  box-shadow:
+    0 0 0 3px rgba(184, 134, 11, 0.4),
+    0 6px 18px rgba(184, 134, 11, 0.55),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.2);
+  animation: miniGoldenPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes miniGoldenPulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.4), 0 6px 18px rgba(184, 134, 11, 0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(184, 134, 11, 0.6), 0 6px 22px rgba(184, 134, 11, 0.85); }
+}

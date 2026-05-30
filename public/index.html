@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <!-- 9:16 抖音竖屏 + 防双指缩放 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>一镜入姑苏</title>
+
+  <!-- ============================================================
+       字体 preload (Noto Serif SC) — 中文宋体 web font
+       ============================================================ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload"
+        as="style"
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap">
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap">
+
+  <!-- ============================================================
+       CSS (顺序: tokens → shell → ticket → scene → share-card)
+       ============================================================ -->
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/shell.css?v=0531-video-fix">
+  <link rel="stylesheet" href="styles/ticket.css">
+  <link rel="stylesheet" href="styles/scene.css">
+  <link rel="stylesheet" href="styles/share-card.css">
+
+  <!-- ============================================================
+       第三方库 (html2canvas 用于分享卡导出)
+       ============================================================ -->
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <!-- ============================================================
+       业务脚本 (defer + 顺序: ticket → shell → scene → sharecard → main)
+       ============================================================ -->
+  <script defer src="scripts/ticket.js"></script>
+  <script defer src="scripts/shell.js?v=0531-video-fix"></script>
+  <script defer src="scripts/scene-pingjianglu.js"></script>
+  <script defer src="scripts/share-card.js"></script>
+  <script defer src="scripts/main.js"></script>
+  <script defer src="scripts/agent-bridge.js"></script>
+</head>
+<body>
+
+  <!-- ============================================================
+       #app — 模拟手机竖屏壳子 (9:16, max-width 432px)
+       ============================================================ -->
+  <div id="app" class="app-root" role="application" aria-label="一镜入姑苏 平江路文化展演">
+
+    <!-- ============================================================
+         #shell-root — 抖音壳子 (Builder 3 注入信息流, 此处先写骨架)
+         ============================================================ -->
+    <div id="shell-root">
+
+      <!-- 信息流 (全屏视频背景) -->
+      <div class="feed" id="feed" aria-label="抖音信息流">
+        <div class="demo-switch" aria-label="展示项目切换">
+          <button class="is-active" type="button" data-demo-mode="boat">游苏州</button>
+          <button type="button" data-demo-mode="pingjiang">平江路</button>
+          <button type="button" data-demo-mode="hanshan">寒山寺</button>
+        </div>
+        <div class="feed__video" id="feed-video" data-video-id="CAM-001">
+          <video class="feed__real-video" muted loop playsinline webkit-playsinline="true" hidden></video>
+          <!-- 远景剪影 (拱桥 + 塔 SVG 内嵌) -->
+          <div class="feed__skyline" aria-hidden="true"></div>
+          <!-- 灯笼装饰 -->
+          <div class="feed__lantern feed__lantern--1" aria-hidden="true"></div>
+          <div class="feed__lantern feed__lantern--2" aria-hidden="true"></div>
+          <div class="feed__lantern feed__lantern--3" aria-hidden="true"></div>
+          <div class="feed__lantern feed__lantern--4" aria-hidden="true"></div>
+        </div>
+
+        <!-- 占位角标 -->
+        <div class="feed__tag" aria-hidden="true"></div>
+
+        <!-- 长按提示 (用户首次进入显示, Shell.js 可隐藏) -->
+        <div class="feed__hint" id="feed-hint" hidden></div>
+
+        <button class="feed-agent" type="button" aria-label="打开一镜入姑苏 Agent">
+        </button>
+        <button class="feed-agent-tip" type="button">点我，感受姑苏雅韵</button>
+
+        <!-- 长按指示器 (圆环倒计时, Shell.js 动态定位) -->
+        <div class="feed__press-indicator" id="feed-press-indicator" aria-hidden="true"></div>
+
+        <!-- 右侧操作栏 -->
+        <div class="feed__actions" aria-label="互动操作">
+          <button class="feed__action" type="button" aria-label="作者头像" data-action="avatar">
+            <span class="feed__avatar">姑</span>
+          </button>
+          <button class="feed__action" type="button" aria-label="点赞 2.3万" data-action="like">
+            <span class="feed__action-icon" aria-hidden="true">♥</span>
+            <span>2.3w</span>
+          </button>
+          <button class="feed__action" type="button" aria-label="评论 892" data-action="comment">
+            <span class="feed__action-icon" aria-hidden="true">💬</span>
+            <span>892</span>
+          </button>
+          <button class="feed__action" type="button" aria-label="收藏 1.1万" data-action="star">
+            <span class="feed__action-icon" aria-hidden="true">⭐</span>
+            <span>1.1w</span>
+          </button>
+          <button class="feed__action" type="button" aria-label="分享" data-action="share">
+            <span class="feed__action-icon" aria-hidden="true">↗</span>
+            <span>分享</span>
+          </button>
+        </div>
+
+        <!-- 左下账号信息 -->
+        <div class="feed__info">
+          <button class="feed__author" type="button" data-feed-link="profile">@今天也在河边发呆</button>
+          <div class="feed__desc">到苏州，不必赶路。坐船穿过粉墙黛瓦，让水巷、评弹和茶点慢慢靠近。</div>
+          <div class="feed__tags">
+            <button class="feed__tag-item" type="button" data-feed-link="tag">#一镜入姑苏</button>
+            <button class="feed__tag-item" type="button" data-feed-link="tag">#苏州园林水巷</button>
+            <button class="feed__tag-item" type="button" data-feed-link="tag">#苏州文旅</button>
+          </div>
+        </div>
+
+        <!-- 右下 BGM 角标 (旋转唱片) -->
+        <div class="feed__bgm" aria-label="背景音乐">
+          <div class="feed__bgm-disc" aria-hidden="true"></div>
+          <div class="feed__bgm-text">♪ 相机识别中</div>
+        </div>
+      </div><!-- /.feed -->
+
+      <!-- ============================================================
+           顶层 UI: 状态栏 + 顶栏 + 底栏 (覆盖在信息流之上)
+           ============================================================ -->
+
+      <!-- iOS 状态栏 -->
+      <div class="statusbar" role="presentation">
+        <div class="statusbar__time" id="statusbar-time">9:41</div>
+        <div class="statusbar__right">
+          <!-- 信号 -->
+          <span class="statusbar__icon icon-signal" aria-hidden="true">
+            <i></i><i></i><i></i><i></i>
+          </span>
+          <!-- WiFi -->
+          <span class="statusbar__icon" aria-hidden="true">
+            <svg class="icon-wifi" viewBox="0 0 14 10" fill="currentColor">
+              <path d="M7 0C4.5 0 2.2 0.9 0.4 2.5L2 4.1C3.4 2.9 5.1 2.2 7 2.2s3.6 0.7 5 1.9l1.6-1.6C11.8 0.9 9.5 0 7 0zm0 3.3c-1.5 0-2.9 0.5-4 1.5L4.6 6.4C5.3 5.8 6.1 5.5 7 5.5s1.7 0.3 2.4 0.9L11 4.8C9.9 3.8 8.5 3.3 7 3.3zm0 3.3c-0.7 0-1.4 0.2-1.9 0.7L7 9.3 8.9 7.3C8.4 6.8 7.7 6.6 7 6.6z"/>
+            </svg>
+          </span>
+          <!-- 电池 -->
+          <span class="statusbar__icon icon-battery" aria-hidden="true">
+            <i></i>
+          </span>
+        </div>
+      </div>
+
+      <!-- 抖音顶栏 (直播/推荐/同城) -->
+      <div class="topbar" role="navigation">
+        <button class="topbar__search" type="button" aria-label="搜索">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"/>
+            <line x1="21" y1="21" x2="16.5" y2="16.5"/>
+          </svg>
+        </button>
+        <div class="topbar__tabs">
+          <span class="topbar__tab">直播</span>
+          <span class="topbar__tab">同城</span>
+          <span class="topbar__tab topbar__tab--active">推荐</span>
+          <span class="topbar__tab">关注</span>
+        </div>
+        <button class="topbar__live" type="button" aria-label="开直播">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- 抖音底部 5 tab 栏 -->
+      <nav class="tabbar" role="tablist" aria-label="底部导航">
+        <button class="tabbar__item tabbar__item--active" type="button" role="tab" aria-selected="true">
+          <span class="tabbar__icon" aria-hidden="true">🏠</span>
+          <span>首页</span>
+        </button>
+        <button class="tabbar__item" type="button" role="tab">
+          <span class="tabbar__icon" aria-hidden="true">👥</span>
+          <span>朋友</span>
+        </button>
+        <button class="tabbar__item tabbar__item--plus" type="button" role="tab" aria-label="发布">
+          <span class="tabbar__plus" aria-hidden="true">+</span>
+        </button>
+        <button class="tabbar__item" type="button" role="tab">
+          <span class="tabbar__icon" aria-hidden="true">📬</span>
+          <span>消息</span>
+        </button>
+        <button class="tabbar__item" type="button" role="tab">
+          <span class="tabbar__icon" aria-hidden="true">👤</span>
+          <span>我</span>
+        </button>
+      </nav>
+
+      <!-- iOS home indicator -->
+      <div class="home-indicator" aria-hidden="true"></div>
+
+    </div><!-- /#shell-root -->
+
+    <!-- ============================================================
+         #scene-root — 平江路场景 (Builder 4 注入)
+         初始隐藏, 进入场景时由 Scene.enter() 去掉 hidden
+         ============================================================ -->
+    <div id="scene-root" hidden></div>
+
+    <!-- ============================================================
+         #ticket-root — AI 船票 (Builder 2 注入)
+         始终可见 (右上角 fixed), 完成步骤后盖章
+         ============================================================ -->
+    <div id="ticket-root"></div>
+
+    <!-- ============================================================
+         #share-root — 姑苏修学卡分享卡 (Builder 5 注入)
+         初始隐藏, ShareCard.generate() 时展示
+         ============================================================ -->
+    <div id="share-root" hidden></div>
+
+    <!-- ============================================================
+         #toast-root — 全局 Toast 提示 (App.toast 使用)
+         ============================================================ -->
+    <div id="toast-root"></div>
+
+    <!-- ============================================================
+         #intro-layer — 1.2s 钩子开场片头 (main.js 内 Intro 模块)
+         ============================================================ -->
+    <div id="intro-layer"></div>
+
+  </div><!-- /#app -->
+
+  <!-- ============================================================
+       状态栏时间动态更新 (内联小脚本, 不依赖任何模块, 立即执行)
+       ============================================================ -->
+  <script>
+    (function updateStatusbarTime() {
+      var el = document.getElementById('statusbar-time');
+      if (!el) return;
+      function tick() {
+        var d = new Date();
+        var h = d.getHours();
+        var m = d.getMinutes();
+        el.textContent = h + ':' + (m < 10 ? '0' + m : m);
+      }
+      tick();
+      // 每 30 秒刷一次
+      setInterval(tick, 30000);
+    })();
+  </script>
+
+  <!-- ============================================================
+       Fallback: 若 fetch JSON 失败 (file:// 协议), main.js 应使用内嵌兜底
+       预留位置, Builder 4 可根据需要在此处内嵌 JSON
+       <script type="application/json" id="data-characters">{...}</script>
+       <script type="application/json" id="data-dialogues">{...}</script>
+       <script type="application/json" id="data-shops">{...}</script>
+       ============================================================ -->
+
+</body>
+</html>
