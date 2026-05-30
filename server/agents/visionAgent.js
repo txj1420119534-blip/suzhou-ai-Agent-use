@@ -13,24 +13,31 @@ const UNKNOWN_RESULT = {
   answerMode: "unknown"
 };
 
-const OPEN_SUZHOU_HINTS = [
-  "核心地标优先：平江路、寒山寺、虎丘、山塘街、拙政园、留园、苏州博物馆、金鸡湖、胥门、盘门、同里、周庄、甪直、木渎",
-  "文字线索优先：牌匾、路牌、门票、字幕、店招、视频标题里的地名，优先级高于画面占比",
-  "著名性优先：如果画面里同时出现普通店铺和著名地标，应优先返回著名地标",
-  "多个地标：如果画面/视频里可确认多个苏州地标，请按著名性和确定性排序列在 candidates"
+const RECOGNITION_HINTS = [
+  "核心地标优先：平江路、寒山寺、虎丘、山塘街、拙政园、留园、苏州博物馆、东方之门、金鸡湖、胥门、盘门、同里、周庄、甪直、木渎。",
+  "文字线索优先：牌匾、路牌、门票、字幕、店招、视频标题里的地名，优先级高于画面占比。",
+  "著名性优先：如果画面里同时出现普通店铺和著名地标，应优先返回著名地标。",
+  "多个地标：如果画面或视频里可确认多个苏州地标，请按著名性和确定性排序列在 candidates。"
 ];
 
 export async function recognizeLandmark({ mediaDataUrl, mediaType = "image", userText = "" }) {
   const scenes = await listScenes();
   const client = createMimoClient();
-  const referenceMatch = mediaType === "image" ? await matchReferenceImage(mediaDataUrl) : null;
+  const hasMedia = typeof mediaDataUrl === "string" && mediaDataUrl.startsWith("data:");
 
-  if (referenceMatch) {
-    return referenceMatch;
+  if (mediaType === "image" && hasMedia) {
+    const referenceMatch = await matchReferenceImage(mediaDataUrl);
+    if (referenceMatch) {
+      return { ...referenceMatch, source: "reference-match" };
+    }
   }
 
-  if (!client || !mediaDataUrl) {
-    return fallbackRecognize({ userText, scenes, reason: client ? "missing_media" : "missing_mimo_key" });
+  if (!client || !hasMedia) {
+    return fallbackRecognize({
+      userText,
+      scenes,
+      reason: client ? "missing_media" : "missing_mimo_key"
+    });
   }
 
   const knownScenes = scenes.map((scene) => ({
@@ -44,31 +51,28 @@ export async function recognizeLandmark({ mediaDataUrl, mediaType = "image", use
   }));
 
   const prompt = [
-    "你是一镜入姑苏的视觉搜索 Agent。请直接识别图片/视频里的场景和地标，并决定下一步跳转。",
+    "你是一镜入姑苏的视觉搜索 Agent。请识别图片/视频里的场景和地标，并决定下一步跳转。",
     "",
     "放开规则：",
     "1. 不要只局限于给定地标库。只要能判断为苏州地标，就返回地标名称并进入 light-card。",
-    "2. 如果不是苏州，或只是普通街景/普通水面/普通室内，sceneId 返回 unknown。",
+    "2. 如果不是苏州，或只是普通街景、普通水面、普通室内，sceneId 返回 unknown。",
     "",
     "收紧规则：",
-    "1. 优先识别核心地标、著名地标。著名性和地标性 > 画面占比。例如画面一角出现寒山寺牌匾，也比大面积普通树木更重要。",
+    "1. 优先识别核心地标、著名地标。著名性和地标性 > 画面占比。",
     "2. 优先读取文字：牌匾、路牌、字幕、视频标题、店招中的地名是最高权重证据。",
-    "3. 如果出现多个可确认的苏州地标，请不要只给一个结论；必须在 candidates 中列出 2-5 个候选，按“著名性 + 确定性”排序。",
-    "4. 平江路仍需谨慎：看到“平江路”“遇见平江路”“Pingjiang Road”等牌匾文字可高置信；没有文字时，需要江南水巷+石桥+白墙黛瓦+河街/摇橹船等强组合。",
-    "5. 东方之门要优先识别为“东方之门”，不要泛化为“金鸡湖”；只有画面重点是湖面/湖区时才返回金鸡湖。",
-    "6. 寒山寺不只看山门文字。普明宝塔/寺塔、黄墙寺院、枫桥、钟楼、银杏林中的寺院塔景，都可作为寒山寺强证据。",
+    "3. 如果出现多个可确认的苏州地标，必须在 candidates 中列出 2-5 个候选，按“著名性 + 确定性”排序。",
+    "4. 平江路：看到“平江路”“遇见平江路”“Pingjiang Road”等牌匾文字可高置信；没有文字时，需要江南水巷+石桥+白墙黛瓦+河街/摇橹船等强组合。",
+    "5. 东方之门：如果画面核心是双塔拱门或苏州中心天际线，必须识别为“东方之门”，不要泛化为“金鸡湖”。只有画面重点是湖面/湖区时才返回金鸡湖。",
+    "6. 寒山寺：不只看山门文字。普明宝塔/寺塔、黄墙寺院、枫桥、钟楼、银杏林中的寺院塔景，都可作为寒山寺强证据。",
     "",
     "输出 JSON，不要输出 Markdown，不要解释 JSON 外内容。",
     "字段：sceneId, landmarkName, confidence, isSuzhou, evidence, candidates, recommendedExperience, answerMode。",
     "candidate 字段：{sceneId, landmarkName, confidence, reason}。",
-    "sceneId 规则：",
-    "- 命中 knownScenes 时返回对应 id。",
-    "- 是苏州地标但不在 knownScenes 时返回 open_suzhou。",
-    "- 不是苏州或证据不足时返回 unknown。",
+    "sceneId 规则：命中 knownScenes 时返回对应 id；是苏州地标但不在 knownScenes 时返回 open_suzhou；不是苏州或证据不足时返回 unknown。",
     "recommendedExperience：open_full_demo / show_light_card / choose_landmark / continue_scanning。",
     "answerMode：full / lite / choose / unknown。",
     `knownScenes=${JSON.stringify(knownScenes)}`,
-    `recognitionHints=${JSON.stringify(OPEN_SUZHOU_HINTS)}`,
+    `recognitionHints=${JSON.stringify(RECOGNITION_HINTS)}`,
     userText ? `用户补充文本：${userText}` : ""
   ].filter(Boolean).join("\n");
 
@@ -77,6 +81,7 @@ export async function recognizeLandmark({ mediaDataUrl, mediaType = "image", use
     : { type: "image_url", image_url: { url: mediaDataUrl } };
 
   try {
+    const startedAt = Date.now();
     const completion = await client.chat.completions.create({
       model: MIMO_VISION_MODEL,
       messages: [
@@ -92,10 +97,18 @@ export async function recognizeLandmark({ mediaDataUrl, mediaType = "image", use
     });
 
     const parsed = parseJsonFromModel(completion.choices?.[0]?.message?.content, UNKNOWN_RESULT);
-    return normalizeRecognition(correctKnownConfusions(parsed), scenes);
+    return {
+      ...normalizeRecognition(correctKnownConfusions(parsed), scenes),
+      source: "mimo-vision",
+      latencyMs: Date.now() - startedAt
+    };
   } catch (error) {
     const fallback = fallbackRecognize({ userText, scenes, reason: "mimo_error" });
-    return { ...fallback, error: error.message };
+    return {
+      ...fallback,
+      source: "mimo-error-fallback",
+      error: error?.message || String(error)
+    };
   }
 }
 
@@ -250,7 +263,8 @@ function fallbackRecognize({ userText, scenes, reason }) {
       evidence: ["演示模式：补充文本中出现多个苏州地标，交给用户选择。"],
       candidates,
       recommendedExperience: "choose_landmark",
-      answerMode: "choose"
+      answerMode: "choose",
+      fallbackReason: reason
     };
   }
 
@@ -269,7 +283,8 @@ function fallbackRecognize({ userText, scenes, reason }) {
         reason: scene.triggerRule
       }],
       recommendedExperience: scene.fullDemo ? "open_full_demo" : "show_light_card",
-      answerMode: scene.fullDemo ? "full" : "lite"
+      answerMode: scene.fullDemo ? "full" : "lite",
+      fallbackReason: reason
     };
   }
 
@@ -280,18 +295,20 @@ function fallbackRecognize({ userText, scenes, reason }) {
       landmarkName: "苏州地标",
       confidence: 0.5,
       isSuzhou: true,
-      evidence: ["演示模式：未配置 MIMO_API_KEY，当前根据补充文本判断为苏州相关。"],
+      evidence: ["演示模式：当前根据补充文本判断为苏州相关。"],
       candidates: [],
       recommendedExperience: "show_light_card",
-      answerMode: "lite"
+      answerMode: "lite",
+      fallbackReason: reason
     };
   }
 
   return {
     ...UNKNOWN_RESULT,
-    evidence: reason === "missing_mimo_key"
-      ? ["演示模式：未配置 MIMO_API_KEY，当前仅根据补充文本关键词做弱匹配。"]
-      : ["未收到可识别的图像/视频输入。"]
+    evidence: reason === "missing_media"
+      ? ["没有收到可识别的图像/视频输入。"]
+      : ["演示模式：未配置 MIMO_API_KEY，当前仅根据补充文本关键词做弱匹配。"],
+    fallbackReason: reason
   };
 }
 

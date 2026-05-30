@@ -114,12 +114,37 @@
       if (label) label.textContent = "AI 正在识别画面里的苏州地标，可以放下手机稍等。";
       shell.classList.add("is-locking");
 
-      const frameDataUrl = captureVideoFrame(root.querySelector(".camera-live"));
+      const cameraVideo = root.querySelector(".camera-live");
+      await waitForVideoFrame(cameraVideo, 1800);
+      const frameDataUrl = captureVideoFrame(cameraVideo);
+      if (!frameDataUrl) {
+        if (label) label.textContent = "没有获取到真实相机画面。请允许浏览器摄像头权限，等画面出现后再点击拍摄。";
+        shell.classList.remove("is-locking");
+        this.toast?.("未获取到相机画面", 1300);
+        return;
+      }
       showRecognitionPreview(root, frameDataUrl);
-      const result = await postJson("/api/recognize/camera", {
-        imageDataUrl: frameDataUrl,
-        userText: frameDataUrl ? "" : "相机画面，等待识别苏州地标"
-      });
+      let result;
+      try {
+        result = await postJson("/api/recognize/camera", {
+          imageDataUrl: frameDataUrl,
+          userText: ""
+        });
+      } catch (error) {
+        hideRecognitionPreview(root);
+        shell.classList.remove("is-locking");
+        if (label) label.textContent = `识别接口调用失败：${error.message || error}`;
+        this.toast?.("识别接口调用失败", 1400);
+        return;
+      }
+
+      if (result?.recognition?.error) {
+        hideRecognitionPreview(root);
+        shell.classList.remove("is-locking");
+        if (label) label.textContent = `模型调用失败：${result.recognition.error}`;
+        this.toast?.("模型调用失败，请看接口返回", 1600);
+        return;
+      }
 
       if (label) label.textContent = "识别结果已生成，正在进入对应页面...";
       await routeAgentResult(this, result, { fromCamera: true });
@@ -424,6 +449,30 @@
     if (!ctx) return "";
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     return canvas.toDataURL("image/jpeg", 0.86);
+  }
+
+  function waitForVideoFrame(video, timeoutMs = 1600) {
+    if (!video) return Promise.resolve(false);
+    if (video.videoWidth && video.videoHeight) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        cleanup();
+        resolve(Boolean(video.videoWidth && video.videoHeight));
+      }, timeoutMs);
+      const done = () => {
+        cleanup();
+        resolve(true);
+      };
+      const cleanup = () => {
+        clearTimeout(timer);
+        video.removeEventListener("loadedmetadata", done);
+        video.removeEventListener("canplay", done);
+        video.removeEventListener("playing", done);
+      };
+      video.addEventListener("loadedmetadata", done, { once: true });
+      video.addEventListener("canplay", done, { once: true });
+      video.addEventListener("playing", done, { once: true });
+    });
   }
 
   async function postJson(url, body) {
