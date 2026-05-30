@@ -1,5 +1,7 @@
 import { recognizeLandmark } from "../../server/agents/visionAgent.js";
 import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { askSuShi } from "../../server/agents/characterAgent.js";
 import { recommendNearby } from "../../server/agents/recommendationAgent.js";
 import { listScenes, routeRecognition, routeSceneById } from "../../server/agents/sceneRouter.js";
@@ -11,6 +13,9 @@ const headers = {
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
   "Content-Type": "application/json; charset=utf-8"
 };
+
+const functionDir = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(functionDir, "../..");
 
 export async function handler(event) {
   if (event.httpMethod === "OPTIONS") {
@@ -45,7 +50,7 @@ export async function handler(event) {
         gate: "server/data/reference-images/dongfangzhimen-0204.jpg",
         hanshan: "server/data/reference-images/hanshansi-pagoda.jpg"
       };
-      const file = fileMap[sample] || fileMap.pingjiang;
+      const file = path.join(projectRoot, fileMap[sample] || fileMap.pingjiang);
       const buffer = await fs.readFile(file);
       const recognition = await recognizeLandmark({
         mediaDataUrl: `data:image/jpeg;base64,${buffer.toString("base64")}`,

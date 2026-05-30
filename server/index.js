@@ -1,6 +1,7 @@
 import "dotenv/config";
 import path from "node:path";
 import fs from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import Koa from "koa";
 import Router from "@koa/router";
 import bodyParser from "koa-bodyparser";
@@ -16,6 +17,7 @@ const app = new Koa();
 const router = new Router({ prefix: "/api" });
 const port = Number(process.env.PORT || 8787);
 const publicDir = path.resolve("public");
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 router.get("/health", async (ctx) => {
   const data = {
@@ -35,7 +37,7 @@ router.get("/vision-probe", async (ctx) => {
     gate: "server/data/reference-images/dongfangzhimen-0204.jpg",
     hanshan: "server/data/reference-images/hanshansi-pagoda.jpg"
   };
-  const file = fileMap[sample] || fileMap.pingjiang;
+  const file = path.join(projectRoot, fileMap[sample] || fileMap.pingjiang);
   const buffer = await fs.readFile(file);
   const recognition = await recognizeLandmark({
     mediaDataUrl: `data:image/jpeg;base64,${buffer.toString("base64")}`,
