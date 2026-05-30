@@ -1,5 +1,6 @@
 import "dotenv/config";
 import path from "node:path";
+import fs from "node:fs/promises";
 import Koa from "koa";
 import Router from "@koa/router";
 import bodyParser from "koa-bodyparser";
@@ -25,6 +26,25 @@ router.get("/health", async (ctx) => {
     data.mimoProbe = await probeMimo();
   }
   ok(ctx, data);
+});
+
+router.get("/vision-probe", async (ctx) => {
+  const sample = String(ctx.query.sample || "pingjiang");
+  const fileMap = {
+    pingjiang: "server/data/reference-images/pingjianglu-r.jpg",
+    gate: "server/data/reference-images/dongfangzhimen-0204.jpg",
+    hanshan: "server/data/reference-images/hanshansi-pagoda.jpg"
+  };
+  const file = fileMap[sample] || fileMap.pingjiang;
+  const buffer = await fs.readFile(file);
+  const recognition = await recognizeLandmark({
+    mediaDataUrl: `data:image/jpeg;base64,${buffer.toString("base64")}`,
+    mediaType: "image",
+    userText: "视觉探针：请识别这张图片里的苏州地标",
+    skipReference: ctx.query.raw === "1"
+  });
+  const route = await routeRecognition(recognition);
+  ok(ctx, { sample, recognition, route });
 });
 
 router.get("/scenes", async (ctx) => {

@@ -1,4 +1,5 @@
 import { recognizeLandmark } from "../../server/agents/visionAgent.js";
+import fs from "node:fs/promises";
 import { askSuShi } from "../../server/agents/characterAgent.js";
 import { recommendNearby } from "../../server/agents/recommendationAgent.js";
 import { listScenes, routeRecognition, routeSceneById } from "../../server/agents/sceneRouter.js";
@@ -35,6 +36,25 @@ export async function handler(event) {
 
     if (event.httpMethod === "GET" && route === "scenes") {
       return json({ ok: true, scenes: await listScenes() });
+    }
+
+    if (event.httpMethod === "GET" && route === "vision-probe") {
+      const sample = String(event.queryStringParameters?.sample || "pingjiang");
+      const fileMap = {
+        pingjiang: "server/data/reference-images/pingjianglu-r.jpg",
+        gate: "server/data/reference-images/dongfangzhimen-0204.jpg",
+        hanshan: "server/data/reference-images/hanshansi-pagoda.jpg"
+      };
+      const file = fileMap[sample] || fileMap.pingjiang;
+      const buffer = await fs.readFile(file);
+      const recognition = await recognizeLandmark({
+        mediaDataUrl: `data:image/jpeg;base64,${buffer.toString("base64")}`,
+        mediaType: "image",
+        userText: "视觉探针：请识别这张图片里的苏州地标",
+        skipReference: event.queryStringParameters?.raw === "1"
+      });
+      const routed = await routeRecognition(recognition);
+      return json({ ok: true, sample, recognition, route: routed });
     }
 
     if (event.httpMethod === "POST" && route === "recognize/camera") {

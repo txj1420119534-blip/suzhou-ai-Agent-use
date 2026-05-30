@@ -20,12 +20,12 @@ const RECOGNITION_HINTS = [
   "多个地标：如果画面或视频里可确认多个苏州地标，请按著名性和确定性排序列在 candidates。"
 ];
 
-export async function recognizeLandmark({ mediaDataUrl, mediaType = "image", userText = "" }) {
+export async function recognizeLandmark({ mediaDataUrl, mediaType = "image", userText = "", skipReference = false }) {
   const scenes = await listScenes();
   const client = createMimoClient();
   const hasMedia = typeof mediaDataUrl === "string" && mediaDataUrl.startsWith("data:");
 
-  if (mediaType === "image" && hasMedia) {
+  if (!skipReference && mediaType === "image" && hasMedia) {
     const referenceMatch = await matchReferenceImage(mediaDataUrl);
     if (referenceMatch) {
       return { ...referenceMatch, source: "reference-match" };
