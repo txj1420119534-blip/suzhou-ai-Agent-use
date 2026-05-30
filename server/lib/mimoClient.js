@@ -13,6 +13,46 @@ export function createMimoClient() {
   });
 }
 
+export async function probeMimo() {
+  const client = createMimoClient();
+  if (!client) {
+    return {
+      ok: false,
+      mode: "fallback-demo",
+      error: "missing_MIMO_API_KEY"
+    };
+  }
+
+  try {
+    const startedAt = Date.now();
+    const completion = await client.chat.completions.create({
+      model: MIMO_TEXT_MODEL,
+      messages: [
+        {
+          role: "user",
+          content: "只回复两个字：姑苏"
+        }
+      ],
+      temperature: 0
+    });
+
+    return {
+      ok: true,
+      mode: "mimo",
+      model: MIMO_TEXT_MODEL,
+      latencyMs: Date.now() - startedAt,
+      sample: completion.choices?.[0]?.message?.content || ""
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      mode: "mimo-configured-but-call-failed",
+      model: MIMO_TEXT_MODEL,
+      error: error?.message || String(error)
+    };
+  }
+}
+
 export function parseJsonFromModel(text, fallback) {
   if (!text) return fallback;
 

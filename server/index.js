@@ -9,17 +9,22 @@ import { askSuShi } from "./agents/characterAgent.js";
 import { recommendNearby } from "./agents/recommendationAgent.js";
 import { listScenes, routeRecognition, routeSceneById } from "./agents/sceneRouter.js";
 import { badRequest, ok, serverError } from "./lib/response.js";
+import { probeMimo } from "./lib/mimoClient.js";
 
 const app = new Koa();
 const router = new Router({ prefix: "/api" });
 const port = Number(process.env.PORT || 8787);
 const publicDir = path.resolve("public");
 
-router.get("/health", (ctx) => {
-  ok(ctx, {
+router.get("/health", async (ctx) => {
+  const data = {
     service: "一镜入姑苏 Agent",
     mode: process.env.MIMO_API_KEY ? "mimo" : "fallback-demo"
-  });
+  };
+  if (ctx.query.probe === "1") {
+    data.mimoProbe = await probeMimo();
+  }
+  ok(ctx, data);
 });
 
 router.get("/scenes", async (ctx) => {

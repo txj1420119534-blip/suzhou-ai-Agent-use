@@ -2,6 +2,7 @@ import { recognizeLandmark } from "../../server/agents/visionAgent.js";
 import { askSuShi } from "../../server/agents/characterAgent.js";
 import { recommendNearby } from "../../server/agents/recommendationAgent.js";
 import { listScenes, routeRecognition, routeSceneById } from "../../server/agents/sceneRouter.js";
+import { probeMimo } from "../../server/lib/mimoClient.js";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -20,12 +21,16 @@ export async function handler(event) {
     const body = parseBody(event.body);
 
     if (event.httpMethod === "GET" && route === "health") {
-      return json({
+      const data = {
         ok: true,
         service: "一镜入姑苏 Agent",
         mode: process.env.MIMO_API_KEY ? "mimo" : "fallback-demo",
         runtime: "netlify-functions"
-      });
+      };
+      if (event.queryStringParameters?.probe === "1") {
+        data.mimoProbe = await probeMimo();
+      }
+      return json(data);
     }
 
     if (event.httpMethod === "GET" && route === "scenes") {
