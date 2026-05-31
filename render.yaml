@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: yijing-ru-gusu-agent
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: MIMO_BASE_URL
+        value: https://api.xiaomimimo.com/v1
+      - key: MIMO_TEXT_MODEL
+        value: mimo-v2.5-pro
+      - key: MIMO_VISION_MODEL
+        value: mimo-v2.5
+      - key: MIMO_API_KEY
+        sync: false

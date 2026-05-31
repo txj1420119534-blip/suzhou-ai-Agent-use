@@ -16,8 +16,8 @@ import { probeMimo } from "./lib/mimoClient.js";
 const app = new Koa();
 const router = new Router({ prefix: "/api" });
 const port = Number(process.env.PORT || 8787);
-const publicDir = path.resolve("public");
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const publicDir = path.join(projectRoot, "public");
 
 router.get("/health", async (ctx) => {
   const data = {
